@@ -172,7 +172,7 @@ if df_pemeriksaan_kesehatan is not None and df_diagnosis_penyakit is not None:
                 relasi_penyakit_dan_gejala[penyakit] = []  # Buat list kosong jika penyakit belum ada
             relasi_penyakit_dan_gejala[penyakit].append(gejala) 
 
-        st.write("Hello")
+        
 
         if st.button("Unduh Laporan"):
             file_pdf = fl.buat_laporan_riwayat(id_pengguna, nama_pengguna, username, tanggal_lahir, tanggal, jenis_kelamin, alamat,
