@@ -190,7 +190,7 @@ if df_pemeriksaan_kesehatan is not None and df_diagnosis_penyakit is not None:
             st.download_button(
                 label="Download PDF",
                 data=file_pdf,
-                file_name = "Laporan Kesehatan_"+nama_pengguna_terpilih+ "_"+str(tanggal)+".pdf",
+                file_name = "Laporan Kesehatan_"+nama_pengguna+ "_"+str(tanggal)+".pdf",
                 mime="application/pdf"
             )
 
