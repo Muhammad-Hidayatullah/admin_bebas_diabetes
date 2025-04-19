@@ -185,6 +185,7 @@ if df_pemeriksaan_kesehatan is not None and df_diagnosis_penyakit is not None:
             #pdf_display = f'<embed src="data:application/pdf;base64,{base64_pdf}" width="700" height="400" type="application/pdf">'
 
             #st.markdown(pdf_display, unsafe_allow_html=True)
+            st.write("Hello")
             
             
             st.download_button(
