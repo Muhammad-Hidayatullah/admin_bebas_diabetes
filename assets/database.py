@@ -997,8 +997,8 @@ def check_data_registrasi_pengguna(username_pengguna, email, password_pengguna, 
     if not nama:
         validation_errors.append("Nama lengkap tidak boleh kosong!")
 
-    if hitung_usia(tanggal_lahir) < 10:
-        validation_errors.append("Usia minimal 10 tahun!")
+    if hitung_usia(tanggal_lahir) < 15:
+        validation_errors.append("Usia minimal 15 tahun!")
 
 
     # Check if address is provided
@@ -1043,8 +1043,8 @@ def check_update_data_pengguna(username, password, nama, email, tanggal_lahir, a
         validation_errors.append("Email tidak valid. Pastikan menggunakan format yang benar (@gmail.com)!")
         
 
-    if hitung_usia(tanggal_lahir) < 10:
-        validation_errors.append("Usia minimal 10 tahun!")
+    if hitung_usia(tanggal_lahir) < 15:
+        validation_errors.append("Usia minimal 15 tahun!")
 
     # Check if address is provided
     if not alamat:
