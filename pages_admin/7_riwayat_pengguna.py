@@ -73,7 +73,7 @@ if df_pemeriksaan_kesehatan is not None and df_diagnosis_penyakit is not None:
     else:
         st.subheader("Hapus Hasil")
     
-    id_pengguna = st.selectbox("Pilih ID Pengguna", options=df_pemeriksaan_kesehatan["ID Pengguna"].unique(), index=0)
+    id_pengguna = st.selectbox("Pilih ID Pengguna", options=sorted(df_pemeriksaan_kesehatan["ID Pengguna"].unique()), index=0)
     tanggal = st.selectbox("Pilih tanggal", options=df_pemeriksaan_kesehatan.loc[df_pemeriksaan_kesehatan["ID Pengguna"] == id_pengguna, "Tanggal Pemeriksaan"], index=0)
 
     df_pengguna_tertentu = df_pengguna[df_pengguna["ID Pengguna"] == id_pengguna]
