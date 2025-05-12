@@ -204,7 +204,7 @@ if df_pemeriksaan_kesehatan is not None and df_diagnosis_penyakit is not None:
             
             
         if st.session_state.konfirmasi_hapus_riwayat == 1:
-            st.warning("Apakah Anda yakin ingin menghapus riwayat?")
+            st.warning("Apakah Anda yakin ingin menghapus riwayat tersebut?")
             if st.button("Ya"):
                 st.session_state.konfirmasi_hapus_riwayat = 2
         if st.session_state.konfirmasi_hapus_riwayat == 2:
