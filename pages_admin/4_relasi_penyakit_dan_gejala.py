@@ -61,7 +61,7 @@ if pilihan_relasi == "Hapus Relasi":
     if st.button("Hapus Relasi"):
         st.session_state.hapus_relasi = 1
     if st.session_state.hapus_relasi == 1:
-        st.warning("Apakah Anda yakin ingin menghapus penyakit tersebut?")
+        st.warning("Apakah Anda yakin ingin menghapus relasi penyakit dan gejala tersebut?")
         if st.button("Ya"):
             st.session_state.hapus_relasi = 2
     if st.session_state.hapus_relasi == 2:
