@@ -208,7 +208,7 @@ if df_pengguna is not None:
         if st.button("Hapus"):
             st.session_state.konfirmasi_hapus = 1
         if st.session_state.konfirmasi_hapus == 1:
-            st.warning("Apakah Anda yakin ingin menghapus? Semua terkait pengguna tersebut akan terhapus!")
+            st.warning("Apakah Anda yakin ingin menghapus pengguna tersebut? Semua data terkait pengguna tersebut akan terhapus!")
             if st.button("Ya"):
                 st.session_state.konfirmasi_hapus = 2
         if st.session_state.konfirmasi_hapus == 2:
