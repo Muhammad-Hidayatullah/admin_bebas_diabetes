@@ -48,7 +48,7 @@ if pilihan_gejala == "Hapus Gejala":
         st.session_state.konfirmasi_menghapus_gejala = 1 
     
     if st.session_state.konfirmasi_menghapus_gejala == 1:
-        st.warning("Apakah Anda yakin ingin menghapus penyakit tersebut?")
+        st.warning("Apakah Anda yakin ingin menghapus gejala tersebut?")
         if st.button("Ya"):
             st.session_state.konfirmasi_menghapus_gejala = 2 
             
