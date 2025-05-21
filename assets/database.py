@@ -1477,17 +1477,17 @@ def fetch_pemeriksaan_kesehatan_pengguna(id_pengguna):
 
 
 def fetch_pemeriksaan_fisik():
-    
-    
     conn = connect_to_db()
     query = "SELECT * FROM pemeriksaan_fisik"
     df = pd.read_sql(query, conn)
+    conn.close()
     return df
 
 def fetch_pemeriksaan_faktor_permanen():
     conn = connect_to_db()
     query = "SELECT * FROM pemeriksaan_faktor_permanen"
     df = pd.read_sql(query, conn)
+    conn.close()
     return df
 
 
@@ -1496,12 +1496,14 @@ def fetch_pemeriksaan_laboratorium():
     conn = connect_to_db()
     query = "SELECT * FROM pemeriksaan_laboratorium;"
     df = pd.read_sql(query, conn)
+    conn.close()
     return df
 
 def fetch_kebiasaan_hidup():
     conn = connect_to_db()
     query = "SELECT * FROM kebiasaan_hidup"
     df = pd.read_sql(query, conn)
+    conn.close()
     return df
 
 
