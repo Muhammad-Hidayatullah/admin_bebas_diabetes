@@ -148,7 +148,7 @@ if df_pengguna is not None:
         
         if st.button(label="Tambah Pengguna"):
             
-            cek_validasi_data_pengguna = db.check_data_registrasi_pengguna(username_pengguna, email, password_pengguna, nama, alamat)
+            cek_validasi_data_pengguna = db.check_data_registrasi_pengguna(username_pengguna, email, password_pengguna, tanggal_lahir, nama, alamat)
             
             if cek_validasi_data_pengguna == True:
                 enkripsi_password = db.enkripsi_password(password_pengguna)
