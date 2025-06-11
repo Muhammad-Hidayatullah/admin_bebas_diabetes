@@ -25,15 +25,18 @@ pilihan_relasi = st.radio("Pilih Opsi untuk Kelola Relasi Penyakit dan Gejala: "
 
 df_penyakit = db.fetch_penyakit()
 kol_id_penyakit = df_penyakit["ID Penyakit"]
+kol_nama_penyakit = df_penyakit["Nama Penyakit"]
 
 df_gejala = db.fetch_gejala()
 kol_id_gejala = df_gejala["ID Gejala"]
+kol_nama_gejala = df_gejala["Nama Gejala"]
 
 
 if pilihan_relasi == "Tambah Relasi":
     st.subheader("Tambah Relasi")
-    id_komplikasi_penyakit = st.selectbox("Masukkan kode penyakit: ", options=kol_id_penyakit, index=0)
-    id_gejala = st.selectbox("Masukkan kode gejala: ", options=kol_id_gejala, index=0)
+    id_komplikasi_penyakit = st.selectbox("Masukkan kode penyakit: ", options=kol_nama_penyakit, index=0)
+    
+    id_gejala = st.selectbox("Masukkan kode gejala: ", options=kol_nama_gejala, index=0)
     if st.button("Tambah Relasi"):
         db.add_relasi_penyakit_dan_gejala(id_komplikasi_penyakit, id_gejala)
         time.sleep(2)
