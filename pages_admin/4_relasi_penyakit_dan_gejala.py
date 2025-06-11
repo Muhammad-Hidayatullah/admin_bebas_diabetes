@@ -36,7 +36,8 @@ if pilihan_relasi == "Tambah Relasi":
     st.subheader("Tambah Relasi")
     id_komplikasi_penyakit = st.selectbox("Masukkan kode penyakit: ", options=kol_nama_penyakit, index=0)
     
-    id_gejala = st.selectbox("Masukkan kode gejala: ", options=kol_nama_gejala, index=0)
+    id_gejala = st.multiselect("Masukkan kode gejala: ", options=kol_nama_gejala, index=0)
+    
     if st.button("Tambah Relasi"):
         db.add_relasi_penyakit_dan_gejala(id_komplikasi_penyakit, id_gejala)
         time.sleep(2)
