@@ -10,7 +10,7 @@ st.markdown(st.session_state.style_tabel + penyakit_df_html, unsafe_allow_html=T
 
 st.subheader("GEJALA")
 gejala_df = db.fetch_gejala()
-gejala_df_html = gejala_df.to_html(index=False, escape=False)
+gejala_df_html = gejala_df.to_hmtml(index=False, escape=False)
 st.markdown(st.session_state.style_tabel + gejala_df_html, unsafe_allow_html=True)
 
 st.subheader("RELASI PENYAKIT DAN GEJALA")
@@ -36,7 +36,7 @@ if pilihan_relasi == "Tambah Relasi":
     st.subheader("Tambah Relasi")
     id_komplikasi_penyakit = st.selectbox("Masukkan kode penyakit: ", options=kol_nama_penyakit, index=0)
     
-    id_gejala = st.multiselect("Masukkan kode gejala: ", options=kol_nama_gejala, index=0)
+    id_gejala = st.multiselect("Masukkan kode gejala: ", options=kol_nama_gejala)
     
     if st.button("Tambah Relasi"):
         db.add_relasi_penyakit_dan_gejala(id_komplikasi_penyakit, id_gejala)
