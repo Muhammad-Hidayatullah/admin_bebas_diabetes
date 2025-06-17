@@ -9,6 +9,9 @@ from assets import format_laporan as fl
 
 st.title("PENGGUNA")
 df_pengguna = db.fetch_pengguna()
+
+
+
 if df_pengguna is not None:
     df_pengguna_html = df_pengguna.to_html(index=False, escape=False)
     st.markdown(st.session_state.style_tabel + df_pengguna_html, unsafe_allow_html=True)
@@ -121,8 +124,9 @@ if df_pengguna is not None:
     def validasi_password(password):
         return len(password) >= 7
 
+ 
     def validasi_email_regex(email):
-        regex = r'^[a-zA-Z0-9_.+-]+@gmail\.com$'
+        regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
         return re.match(regex, email) is not None
 
 

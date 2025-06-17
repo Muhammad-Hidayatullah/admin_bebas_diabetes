@@ -33,10 +33,6 @@ def dekripsi_password(enkripsi_password):
 
 
 
-
-
-
-
 # Mengakses ke database
 db_credentials = st.secrets["mysql"]
 
@@ -60,8 +56,9 @@ def connect_to_db():
     )
 
 
+
 def forward_chaining(fakta, aturan):
-    # Penyakit yang mungkin didiagnosis
+    # Penyakit yang mungkin terdiagnosis
     kemungkinan_penyakit = {}
     
     for penyakit, gejala_penyakit in aturan.items():
@@ -73,6 +70,8 @@ def forward_chaining(fakta, aturan):
     hasil = {penyakit: kecocokan for penyakit, kecocokan in kemungkinan_penyakit.items() if kecocokan > 0.0}
     
     return hasil
+
+
 
 
 
@@ -137,7 +136,15 @@ def get_data_pengguna(username):
     conn.close()
     return result if result else None
     
-    
+def get_data_pengguna_dokter(username):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    query = "SELECT * FROM pengguna WHERE username = %s AND jenis_pengguna = 'DOKTER'"
+    cursor.execute(query, (username,))
+    result = cursor.fetchone()
+    conn.close()
+    return result if result else None
+
      
 def fetch_faktor_risiko():
     conn = connect_to_db()
@@ -145,6 +152,122 @@ def fetch_faktor_risiko():
     df = pd.read_sql(query, conn)
     conn.close()
     return df
+
+
+
+
+
+
+
+def fetch_dokter():
+    conn = connect_to_db()
+    query = "SELECT id_dokter, nama_dokter, kualifikasi, no_str, no_hp, id_pengguna FROM dokter;"
+    cursor = conn.cursor(dictionary=True)
+    
+    cursor.execute(query)
+    result = cursor.fetchall()
+    conn.close()
+    
+    if not result:
+        return None
+
+    # Convert result to Pandas DataFrame
+    df = pd.DataFrame(result)
+
+    # Column renaming dictionary
+    ganti_header = {
+        "id_dokter": "ID Dokter",
+        "nama_dokter": "Nama Dokter",
+        "kualifikasi" : "Kualifikasi",
+        "no_str" : "Nomor STR",
+        "no_hp" : "Nomor HP",
+        "id_pengguna" : "ID Pengguna"
+    }
+
+    # Rename columns
+    df.rename(columns=ganti_header, inplace=True)
+
+    return df 
+
+
+
+def menambah_id_dokter_default():
+    
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    
+    # Ambil ID terakhir dari database (misalnya A0001, A0002, dst)
+    cursor.execute("SELECT id_dokter FROM dokter ORDER BY id_dokter DESC LIMIT 1")
+    last_id = cursor.fetchone()
+    
+    if last_id:
+        # Ambil nomor dari ID terakhir dan increment 1
+        last_number = int(last_id[0][1:])  # Mengambil angka setelah 'D'
+        new_id = f"D{last_number + 1:04d}"  
+    else:
+        # Jika tidak ada data sebelumnya, mulai dengan A0001
+        new_id = "D0001"
+    
+    conn.close()
+    return new_id
+
+
+
+def add_dokter(id_dokter, nama_dokter, kualifikasi, no_str, no_hp, id_pengguna_dokter):
+    try:
+        conn = connect_to_db()
+        cursor = conn.cursor()
+        
+        query = "INSERT INTO dokter (id_dokter, nama_dokter, kualifikasi, no_str, no_hp, id_pengguna) VALUES (%s, %s, %s, %s, %s, %s)"
+        cursor.execute(query, (id_dokter, nama_dokter, kualifikasi, no_str, no_hp, id_pengguna_dokter))
+        conn.commit()
+        st.success("Dokter Berhasil Ditambahkan")
+    except mysql.connector.Error as err:
+        err = "ID Dokter, Nomor STR, Nomor HP, Email, atau ID Pengguna sudah terdaftar!"
+        st.error(f"{err}")
+
+    finally:
+        if cursor:
+            cursor.close()
+            conn.close()
+
+
+
+
+def update_dokter(id_dokter, nama_dokter, kualifikasi, no_str, no_hp, id_pengguna):
+    try:
+        conn = connect_to_db()
+        cursor = conn.cursor()
+        
+        query = "UPDATE dokter SET nama_dokter = %s, kualifikasi = %s, no_str = %s, no_hp = %s, id_pengguna = %s WHERE id_dokter = %s"
+        
+        cursor.execute(query, (nama_dokter, kualifikasi, no_str, no_hp, id_pengguna, id_dokter))
+        conn.commit()
+        st.success("Data Dokter Berhasil Diupdate")
+        
+    except mysql.connector.Error as err:
+        #err = "Nomor STR atau Nomor HP sudah digunakan!"
+        st.error(f"{err}")
+
+    finally:
+        if cursor:
+            cursor.close()
+            conn.close()
+
+def hapus_dokter(id_dokter):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    
+    query = "DELETE FROM dokter WHERE id_dokter = %s"
+    
+    cursor.execute(query, (id_dokter,)) #harus ditambah koma ,
+    conn.commit()
+    st.success("Data dokter Berhasil Dihapus")
+    conn.close()
+
+
+
+
 
 #UNTUK PENYAKIT
 def fetch_penyakit():
@@ -333,7 +456,7 @@ def nama_gejala(id_gejala):
 #UNTUK GEJALA
 def fetch_relasi_penyakit_dan_gejala_full():
     conn = connect_to_db()
-    query = "SELECT relasi_penyakit_gejala.id_komplikasi_penyakit, komplikasi_penyakit.nama_penyakit, relasi_penyakit_gejala.id_gejala, gejala.nama_gejala FROM relasi_penyakit_gejala JOIN komplikasi_penyakit ON relasi_penyakit_gejala.id_komplikasi_penyakit = komplikasi_penyakit.id_komplikasi_penyakit JOIN gejala ON relasi_penyakit_gejala.id_gejala = gejala.id_gejala ORDER BY relasi_penyakit_gejala.id_komplikasi_penyakit ASC, relasi_penyakit_gejala.id_gejala ASC;"
+    query = "SELECT relasi_penyakit_gejala.id_komplikasi_penyakit, komplikasi_penyakit.nama_penyakit, relasi_penyakit_gejala.id_gejala, gejala.nama_gejala, relasi_penyakit_gejala.id_dokter, dokter.nama_dokter FROM relasi_penyakit_gejala JOIN komplikasi_penyakit ON relasi_penyakit_gejala.id_komplikasi_penyakit = komplikasi_penyakit.id_komplikasi_penyakit JOIN gejala ON relasi_penyakit_gejala.id_gejala = gejala.id_gejala JOIN dokter on relasi_penyakit_gejala.id_dokter = dokter.id_dokter ORDER BY relasi_penyakit_gejala.id_komplikasi_penyakit ASC, relasi_penyakit_gejala.id_gejala ASC;"
     
     cursor = conn.cursor(dictionary=True)
     cursor.execute(query)
@@ -351,7 +474,9 @@ def fetch_relasi_penyakit_dan_gejala_full():
         "id_komplikasi_penyakit": "ID Penyakit",
         "nama_penyakit": "Nama Penyakit",
         "id_gejala" : "ID Gejala",
-        "nama_gejala" : "Nama Gejala"
+        "nama_gejala" : "Nama Gejala",
+        "id_dokter" : "ID Dokter",
+        "nama_dokter" : "Nama Dokter"
         
     }
 
@@ -419,17 +544,20 @@ def get_solusi_penyakit(nama_penyakit):
     return solusi[0] if solusi else None
     
 
-def add_relasi_penyakit_dan_gejala(id_komplikasi_penyakit, id_gejala):
+def add_relasi_penyakit_dan_gejala(id_komplikasi_penyakit, list_id_gejala, id_dokter):
     try:
         conn = connect_to_db()
         cursor = conn.cursor()
         
-        query = "INSERT INTO relasi_penyakit_gejala (id_komplikasi_penyakit, id_gejala) VALUES (%s, %s)"
-        cursor.execute(query, (id_komplikasi_penyakit, id_gejala))
+        query = "INSERT INTO relasi_penyakit_gejala (id_komplikasi_penyakit, id_gejala, id_dokter) VALUES (%s, %s, %s)"
+        
+        for id_gejala in list_id_gejala:
+            cursor.execute(query, (id_komplikasi_penyakit, id_gejala, id_dokter))
+        
         conn.commit()
     
-    except mysql.connector.Error:
-        err = "ID Penyakit dan ID Gejala sudah terhubung!!"
+    except mysql.connector.Error as err:
+        err = "Terdapat kesalahan!!"
         st.error(f"{err}")  # Show the error
         return False  # Indicate failure
 
@@ -447,7 +575,7 @@ def update_relasi_penyakit_dan_gejala(id_komplikasi_penyakit, id_gejala, id_geja
         query = "UPDATE relasi_penyakit_gejala SET id_gejala = %s WHERE id_komplikasi_penyakit = %s AND id_gejala = %s"
 
         cursor.execute(query, (id_gejala_baru, id_komplikasi_penyakit, id_gejala))
-        
+        st.success("Berhasil Update Data!")
         conn.commit()
         
     except mysql.connector.Error:
@@ -461,15 +589,20 @@ def update_relasi_penyakit_dan_gejala(id_komplikasi_penyakit, id_gejala, id_geja
             conn.close()
 
 
-def hapus_relasi_penyakit_dan_gejala(id_komplikasi_penyakit, id_gejala):
+def hapus_relasi_penyakit_dan_gejala(id_komplikasi_penyakit, list_id_gejala):
+   
+    
     conn = connect_to_db()
     cursor = conn.cursor()
-    
+        
     query = "DELETE FROM relasi_penyakit_gejala WHERE id_komplikasi_penyakit = %s AND id_gejala = %s"
-    
-    cursor.execute(query, (id_komplikasi_penyakit, id_gejala)) #harus ditambah koma ,
+        
+    for id_gejala in list_id_gejala:
+        cursor.execute(query, (id_komplikasi_penyakit, id_gejala))
+        
     conn.commit()
-    st.success("Relasi Penyakit dan Gejala Berhasil Dihapus")
+    
+    conn.commit()
     conn.close()
 
 
@@ -554,7 +687,7 @@ def fetch_pengguna():
     conn = connect_to_db()
     cursor = conn.cursor(dictionary=True)
     query = """
-    SELECT pengguna.id_pengguna, pengguna.username, pengguna.password, pengguna.nama_pengguna, pengguna.jenis_kelamin, pengguna.alamat, pengguna.email, pengguna.pekerjaan, pengguna.tanggal_lahir FROM pengguna WHERE jenis_pengguna="PENGGUNA";
+    SELECT pengguna.id_pengguna, pengguna.username, pengguna.password, pengguna.nama_pengguna, pengguna.jenis_kelamin, pengguna.alamat, pengguna.email, pengguna.pekerjaan, pengguna.tanggal_lahir FROM pengguna WHERE jenis_pengguna ="PENGGUNA";
     """ 
     cursor.execute(query)
     result = cursor.fetchall()
@@ -584,7 +717,38 @@ def fetch_pengguna():
     return df 
 
 
+def fetch_pengguna_dokter():
+    conn = connect_to_db()
+    cursor = conn.cursor(dictionary=True)
+    query = """
+    SELECT pengguna.id_pengguna, pengguna.username, pengguna.password, pengguna.nama_pengguna, pengguna.jenis_kelamin, pengguna.alamat, pengguna.email, pengguna.pekerjaan, pengguna.tanggal_lahir FROM pengguna WHERE jenis_pengguna="DOKTER";
+    """ 
+    cursor.execute(query)
+    result = cursor.fetchall()
+    conn.close()
+    if not result:
+        return None
 
+    # Convert result to Pandas DataFrame
+    df = pd.DataFrame(result)
+
+    # Column renaming dictionary
+    ganti_header = {
+        "id_pengguna": "ID Pengguna",
+        "username": "Username",
+        "password": "Password",
+        "nama_pengguna": "Nama Pengguna",
+        "jenis_kelamin": "Jenis Kelamin",
+        "alamat": "Alamat",
+        "email": "Email",
+        "pekerjaan": "Pekerjaan",
+        "tanggal_lahir": "Tanggal Lahir"
+    }
+
+    # Rename columns
+    df.rename(columns=ganti_header, inplace=True)
+
+    return df 
 
 
 def update_pengguna(username, password, nama_pengguna, jenis_kelamin, alamat, email, pekerjaan, tanggal_lahir, username_lama):
@@ -729,7 +893,38 @@ def add_pengguna(id_pengguna, username, password, nama_pengguna, jenis_kelamin,
             conn.close()
     
     
+
+def add_pengguna_dokter(id_pengguna, username, password, nama_pengguna, jenis_kelamin, 
+                 alamat, email, pekerjaan, tanggal_lahir, jenis_pengguna):
+    try:
+        conn = connect_to_db()
+        cursor = conn.cursor()
+        
+        query = """INSERT INTO pengguna (id_pengguna, username, password, nama_pengguna, 
+        jenis_kelamin, alamat, email, pekerjaan, tanggal_lahir, jenis_pengguna) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"""
+        cursor.execute(query, (id_pengguna, username, password, nama_pengguna, jenis_kelamin, 
+                               alamat, email, pekerjaan, tanggal_lahir, jenis_pengguna))
+        conn.commit()
     
+    except mysql.connector.Error as err:
+        err = "Username atau Email Sudah Digunakan!!"
+        st.error(f"{err}")
+
+    finally:
+        if cursor:
+            cursor.close()
+            conn.close()
+    
+    
+def hapus_data_pengguna_dokter(id_pengguna):
+    conn = connect_to_db()
+    cursor = conn.cursor()
+    query = "DELETE FROM pengguna WHERE id_pengguna = %s AND jenis_pengguna = 'DOKTER'"
+    cursor.execute(query, (id_pengguna,))
+    conn.commit()
+    conn.close()    
+    
+
 def get_id_pengguna(username):
     try:
         connection = connect_to_db()
@@ -921,7 +1116,7 @@ def get_last_id_pengguna():
 def get_jumlah_pengguna():
     conn = connect_to_db()
     cursor = conn.cursor()
-    query = "SELECT COUNT(*) FROM pengguna;"
+    query = "SELECT COUNT(*) FROM pengguna WHERE jenis_pengguna = 'PENGGUNA';"
     cursor.execute(query)
     result = cursor.fetchone()
     conn.close()
@@ -958,9 +1153,12 @@ def get_penjelasan_penyakit(nama_penyakit):
 def validasi_password(password):
         return len(password) >= 7
 
+
+
 def validasi_email_regex(email):
-    regex = r'^[a-zA-Z0-9_.+-]+@gmail\.com$'
+    regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
     return re.match(regex, email) is not None
+
 
 
 def hitung_usia(tanggal_lahir):
@@ -975,24 +1173,21 @@ def check_data_registrasi_pengguna(username_pengguna, email, password_pengguna, 
                 
     if cek_username(username_pengguna) == True:
         validation_errors.append("Username sudah terdaftar!")
-
         
     if cek_email(email) == True:
         validation_errors.append("Email Sudah Terdaftar!")
 
-    if email != None:
+    if not email:
         validation_errors.append("Email Tidak Boleh Kosong!")
 
     if not email or not validasi_email_regex(email):
-        validation_errors.append("Email tidak valid. Pastikan menggunakan format yang benar (@gmail.com)!")
+        validation_errors.append("Email tidak valid. Pastikan menggunakan format yang benar (username_anda@gmail.com, username_anda@yahoo.co.id, dan format lainnya)!")
    
     if not username_pengguna:
         validation_errors.append("Username tidak boleh kosong!")
 
-
     if not password_pengguna or not validasi_password(password_pengguna):
         validation_errors.append("Password harus lebih dari 6 karakter!")
-
    
     if not nama:
         validation_errors.append("Nama lengkap tidak boleh kosong!")
@@ -1000,18 +1195,18 @@ def check_data_registrasi_pengguna(username_pengguna, email, password_pengguna, 
     if hitung_usia(tanggal_lahir) < 15:
         validation_errors.append("Usia minimal 15 tahun!")
 
-
-    # Check if address is provided
     if not alamat:
         validation_errors.append("Alamat tidak boleh kosong!")
 
-    # Display validation errors
+    # Menampilkan pesan error
     if validation_errors:
         for error in validation_errors:
             st.error(error)
         return False
     else:
         return True
+
+
 
 def check_update_data_pengguna(username, password, nama, email, tanggal_lahir, alamat):
     validation_errors = []
@@ -1035,10 +1230,7 @@ def check_update_data_pengguna(username, password, nama, email, tanggal_lahir, a
     if cek_email(email) == True and email != email:
         validation_errors.append("Email Sudah Terdaftar!")
         
-        
-    if cek_email(email) == True and email != email:
-        validation_errors.append("Email Sudah Terdaftar")
-        
+    
     if not email or not validasi_email_regex(email):
         validation_errors.append("Email tidak valid. Pastikan menggunakan format yang benar (@gmail.com)!")
         
@@ -1075,7 +1267,7 @@ def check_admin(username, password):
         if result:
             dekripsi = dekripsi_password(result[1])
             if result[0] == username and dekripsi == password:
-                return True # User is found
+                return True # User ditemukan
         else:
             return False # User not found
 
@@ -1088,15 +1280,133 @@ def check_admin(username, password):
             cursor.close()
         if connection:
             connection.close()
-            
-            
-def cek_lupa_password_admin(username, email):
+        
+       
+       
+def check_dokter(username, password):
+    
     try:
         connection = connect_to_db()
         cursor = connection.cursor()
 
         # SQL query to check user credentials
-        query = "SELECT username, email FROM pengguna WHERE username = %s AND jenis_pengguna='ADMIN'"
+        query = "SELECT username, password FROM pengguna WHERE username = %s AND jenis_pengguna='DOKTER'"
+
+        cursor.execute(query, (username,))
+
+        # Fetch one result
+        result = cursor.fetchone()
+        if result:
+            dekripsi = dekripsi_password(result[1])
+            if result[0] == username and dekripsi == password:
+                return True # User ditemukan
+        else:
+            return False # User not found
+
+    except mysql.connector.Error as err:
+        st.error(f"Database error: {err}")  # Show the error
+        return False  # Indicate failure
+
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close() 
+            
+def check_dokter(username, password):
+    
+    try:
+        connection = connect_to_db()
+        cursor = connection.cursor()
+
+        # SQL query to check user credentials
+        query = "SELECT username, password FROM pengguna WHERE username = %s AND jenis_pengguna='DOKTER'"
+
+        cursor.execute(query, (username,))
+
+        # Fetch one result
+        result = cursor.fetchone()
+        if result:
+            dekripsi = dekripsi_password(result[1])
+            if result[0] == username and dekripsi == password:
+                return True # User ditemukan
+        else:
+            return False # User not found
+
+    except mysql.connector.Error as err:
+        st.error(f"Database error: {err}")  # Show the error
+        return False  # Indicate failure
+
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()    
+
+    
+    
+def check_login_dokter(username, password):
+    try:
+        conn = connect_to_db()
+        cursor = conn.cursor(dictionary=True)
+
+        # 1. Ambil user dari tabel pengguna
+        query = "SELECT id_pengguna, username, password, jenis_pengguna FROM pengguna WHERE username = %s"
+        cursor.execute(query, (username,))
+        user = cursor.fetchone()
+
+        if user:
+            if dekripsi_password(user["password"]) == password:
+                # Jika role dokter, cek apakah sudah diverifikasi
+                if user["jenis_pengguna"] == "DOKTER":
+                    cursor.execute("SELECT COUNT(*) FROM dokter WHERE id_pengguna = %s", (user["id_pengguna"],))
+                    verified = cursor.fetchone()["COUNT(*)"] > 0
+
+                    if not verified:
+                        return None, False, "Akun dokter belum diverifikasi admin."
+
+                # Return berhasil
+                return user["id_pengguna"], True, f"Login berhasil sebagai {user['jenis_pengguna']}"
+        
+        return None, False, "Username atau password salah."
+
+    except Exception as e:
+        return None, False, f"Error: {e}"
+
+    finally:
+        cursor.close()
+        conn.close()
+
+        
+        
+        
+        
+def cek_validasi_dokter():
+    try:
+        connection = connect_to_db()
+        cursor = connection.cursor()
+        query = ""
+        
+    except mysql.connector.Error as err:
+        st.error(f"Database error: {err}")  # Show the error
+        return False  # Indicate failure
+
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close() 
+            
+            
+            
+def cek_lupa_password_admin(username, email):
+    
+    try:
+        connection = connect_to_db()
+        cursor = connection.cursor()
+
+        # SQL query to check user credentials
+        query = "SELECT username, email FROM pengguna WHERE username = %s AND jenis_pengguna !='PENGGUNA'"
 
         cursor.execute(query, (username,))
 
@@ -1174,22 +1484,22 @@ def check_pengguna(username, password):
         connection = connect_to_db()
         cursor = connection.cursor()
 
-        # SQL query to check user credential
+       
         query = "SELECT username, password FROM pengguna WHERE username = %s"
         cursor.execute(query, (username,))
 
-        # Fetch one result
+        # Ambil satu hasilnya
         result = cursor.fetchone()
         if result:
             dekripsi = dekripsi_password(result[1])
             if result[0] == username and dekripsi == password:
-                return True # User is found
+                return True # Pengguna tidak ditemukan
         else:
-            return False  # User not found
+            return False  # Pengguna tidak ditemukan
 
     except mysql.connector.Error as err:
         st.error(f"Database error: {err}")  # Show the error
-        return False  # Indicate failure
+        return False  # Gagal
 
     finally:
         if cursor:
@@ -1197,7 +1507,11 @@ def check_pengguna(username, password):
         if connection:
             connection.close()
             
+            
+            
+            
 def cek_username(username):
+    
     try:
         connection = connect_to_db()
         cursor = connection.cursor()
